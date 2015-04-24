@@ -10,6 +10,7 @@ int process(TString filename, TString treename, TString outFilename) {
     gROOT->ProcessLine(".L TClusterFinder.cxx+");
     gROOT->ProcessLine(".L TTrack.cxx+");
     gROOT->ProcessLine(".L TFit.cxx+");
+    cout << "processing " << filename << endl;
     Int_t rejectX = 0;
     Int_t rejectErr = 0;
     Int_t rejectHits = 0;
@@ -67,8 +68,8 @@ int process(TString filename, TString treename, TString outFilename) {
             fit1->dlong = 165.751;
             fit1->xErrp1 = 0.0456;
             fit1->xErrp2 = 0.0552;
-            fit1->zErrp1 = 0.545;
-            fit1->zErrp2 = 0.0410;
+            fit1->zErrp1 = 0.55;
+            fit1->zErrp2 = 0.0340;
 
             fit2->vdrift = 1.7; //cm / micro sec
             fit2->zmax = 30.; //drift height in mm
@@ -80,33 +81,61 @@ int process(TString filename, TString treename, TString outFilename) {
             fit2->zErrp1 = 0.501;
             fit2->zErrp2 = 0.0450;
 
-            //track1 = fit1->FitTGraph();
-            //track2 = fit2->FitTGraph();
             track1 = fit1->FitYork();
             track2 = fit2->FitYork();
-            if (track2->a != track2->a) { cout << "track2.a nan" << endl; }
-            if /* (track1->chi2yx / track1->nhits > 4) ||
-               (track2->chi2yx / track2->nhits > 4) ||
-               (abs(track1->a)>1) ||
-               (abs(track1->c)>1) ||
-               (abs(track2->a)>1) ||
-               (abs(track2->c)>1)
-               )*/
-            (false) { }
-            /* 
-                ((track1->aErr>0.1) || (track2->aErr>0.1) ||
-                (track1->cErr>0.2) || (track2->cErr>0.2))
-                { rejectErr++; }
 
-            */
-            else {
-                outTree->Fill();
-                if (i==52) {
-                    cout << "123123" << endl;
-                 //   tv->AddHits(clusters1[0],kBlue);
-                 //   tv->AddTrack(track1,1);
-                }
+	    //bootstrap start
+		
+            for (int j=0;j<200;j++) {
+                THitCollection* hcnew = TFit::redraw(clusters1[0]);
+		hcnew->SetOwner(kFALSE);
+                TFit *bsfit1 = new TFit(hcnew);
+                bsfit1->vdrift = 2.0; //cm / micro sec
+                bsfit1->zmax = 30.; //drift height in mm
+                bsfit1->zstart = 40.; //start of z in bins (@ cathode)
+                bsfit1->dtrans = 201.480; //micro m / sqrt cm
+                bsfit1->dlong = 165.751;
+                bsfit1->xErrp1 = 0.0456;
+                bsfit1->xErrp2 = 0.0552;
+                bsfit1->zErrp1 = 0.55;
+                bsfit1->zErrp2 = 0.0340;
+                TTrack *bstrack1 = bsfit1->FitYork();
+                track1->aErrBS+=(bstrack1->a - track1->a)*(bstrack1->a - track1->a);
+                track1->cErrBS+=(bstrack1->c - track1->c)*(bstrack1->c - track1->c);
+                delete bstrack1; 
+                delete bsfit1;
+		delete hcnew;
             }
+            track1->aErrBS = sqrt(track1->aErrBS/200.);
+            track1->cErrBS = sqrt(track1->cErrBS/200.);
+
+            for (int j=0;j<200;j++) {
+                THitCollection* hcnew = TFit::redraw(clusters2[0]);
+		hcnew->SetOwner(kFALSE);
+                TFit *bsfit1 = new TFit(hcnew);
+                bsfit1->vdrift = 1.7; //cm / micro sec
+                bsfit1->zmax = 30.; //drift height in mm
+                bsfit1->zstart = 20.; //start of z in bins (@ cathode)
+                bsfit1->dtrans = 201.480; //micro m / sqrt cm
+                bsfit1->dlong = 165.751;
+                bsfit1->xErrp1 = 0.0197;
+                bsfit1->xErrp2 = 0.0661;
+                bsfit1->zErrp1 = 0.501;
+                bsfit1->zErrp2 = 0.045;
+                TTrack *bstrack1 = bsfit1->FitYork();
+                track2->aErrBS+=(bstrack1->a - track2->a)*(bstrack1->a - track2->a);
+                track2->cErrBS+=(bstrack1->c - track2->c)*(bstrack1->c - track2->c);
+                delete bstrack1; 
+                delete bsfit1;
+		delete hcnew;
+            }
+            track2->aErrBS = sqrt(track2->aErrBS/200.);
+            track2->cErrBS = sqrt(track2->cErrBS/200.);
+
+
+	    //bootstrap end
+
+	    outTree->Fill();
             delete track1; 
             delete track2;
             delete fit1;

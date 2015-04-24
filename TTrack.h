@@ -11,8 +11,10 @@ public:
     Double_t ycogxy; //y cog xy plane
     Double_t ycogzy; //y cog zy plane
     Double_t aErr;
+    Double_t aErrBS;
     Double_t bErr;
     Double_t cErr;
+    Double_t cErrBS;
     Double_t dErr;
     Double_t chi2yx;
     Double_t chi2yz;

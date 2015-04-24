@@ -14,7 +14,7 @@ TClusterFinder::TClusterFinder(THitCollection *h) {
     rawhits = h;
 }
 TClusterFinder::~TClusterFinder() { 
-   //for (Int_t i=0;i<clusters.size();i++) delete clusters[i];
+   for (Int_t i=0;i<clusters.size();i++) delete clusters[i]; //comment this out if it crashes
    clusters.clear();
 }
 
@@ -40,6 +40,7 @@ void TClusterFinder::FindByX(Int_t minhits,Int_t maxoffset, Int_t ydif) {
                clusters.push_back(currentCluster); 
             else { delete currentCluster; }
             currentCluster = new THitCollection();
+	    currentCluster->SetOwner(kFALSE);
         }
         currentCluster->Add(nextHit);
         lastHit = nextHit;

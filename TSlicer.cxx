@@ -18,10 +18,8 @@ TTrack::TTrack() {
     c=0;
     d=0;
     aErr=0;
-    aErrBS=0;
     bErr=0;
     cErr=0;
-    cErrBS=0;
     dErr=0;
     ycogxy=0;
     ycogzy=0;
