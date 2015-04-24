@@ -1,4 +1,4 @@
-
+TH1D *ttt;
 
 TH2D *getImage(TChain *t) {
     gROOT->ProcessLine(".L TTrack.cxx+");
@@ -81,35 +81,26 @@ TH2D *getImage(TChain *t) {
         Double_t z1 = zycog1.X() + (yplane - zycog1.Y())*TMath::Tan(S1);
         
         TVector2 zycog2(track2->d,xycog2.Y());
-        zycog2.Set(zycog2.X()+dTPCz,zycog2.Y()+dTPCy);
+        zycog2.Set(zycog2.X()+dTPCz,zycog2.Y());
         
         Double_t z2 = zycog2.X() - (zycog2.Y() - yplane)*TMath::Tan(S2);
+        
 
 
         avgx1x2b+=(x1-x2);
-      //  cout << z1 << " " << z2 << endl;
-
-
-    //    dist->Fill(z1-z2);
 
         Double_t x = (x1+x2)/2.;
-        //x = x1;
         Double_t y = (z1+z2)/2.;
-/*        if (track1->aErr > 0.01) {
-            //x=(xycog1.X()+xycog2.X())/2.;
-            x=xycog1.X();
-        }*/
-//        cout << "x1 " << xycog1.X() << " x2 " << xycog2.X() << endl; 
-            //x = ((track1->b + 8.2*track1->a) + (track2->b - 6.8*track2->a))/2.;
-        //y = ((track1->d + 8.2*track1->c) + (track2->d - 6.8*track2->c))/2.;
-//        y = (zycog1.X() + zycog2.X())/2.;
-//        y = (zycog1.X());
-        //Double_t x = (track2->b + (track1->a * 256 + track1->b))/2;
-        //Double_t y = (track2->d + (track1->c * 256 + track1->d))/2;
+        
+        x = xycog1.X() + (yplane-xycog1.Y())*(xycog2.X()-xycog1.X())/(xycog2.Y()-xycog1.Y());
+        y = zycog1.X() + (yplane-zycog1.Y())*(zycog2.X()-zycog1.X())/(zycog2.Y()-zycog1.Y());
+
+
         Int_t xbin =  (numbinsx/(xHigh-xLow))*(x-xLow);
         Int_t ybin =  (numbinsy/(yHigh-yLow))*(y-yLow);
         if (xbin>0 && xbin<numbinsx && ybin>0 && ybin<numbinsy) {
-            binEnergy[xbin][ybin]->Fill(150-energy,1./track1->aErr);
+            //binEnergy[xbin][ybin]->Fill(150-energy,1./track1->aErr);
+            binEnergy[xbin][ybin]->Fill(150-energy,1.);
             bincounts->Fill(xbin,ybin);
         }
 
@@ -130,7 +121,11 @@ TH2D *getImage(TChain *t) {
     for (Int_t i=0;i<numbinsx;i++)
         for (Int_t j=0;j<numbinsy;j++) {
             if (binEnergy[i][j]->GetEntries()>15) {
-                
+               
+               /* 
+                hist->SetBinContent(i,j,binEnergy[i][j]->GetMean() ); 
+*/
+
                 /*******************************
                  * Find max from gauss density *
                  *******************************/
@@ -144,7 +139,8 @@ TH2D *getImage(TChain *t) {
                          d=d+ binEnergy[i][j]->GetBinContent(l) * TMath::Exp((-1. * (Double_t )((k-l)*(k-l))) / (2.*6.*6.));
                     dens->SetBinContent(k,d);
                 }
-                hist->SetBinContent(i,j,dens->GetMaximumBin()*((eHigh-eLow)/100)+eLow ); 
+                Double_t nrg = dens->GetMaximumBin()*((eHigh-eLow)/100)+eLow;
+                hist->SetBinContent(i,j,nrg); 
                 delete dens;
                 
 
